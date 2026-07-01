@@ -16,7 +16,6 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [forgotAlert, setForgotAlert] = useState(false);
   const [successPopup, setSuccessPopup] = useState(false);
 
   // Redirect if already logged in
@@ -54,8 +53,7 @@ export default function LoginPage() {
 
   const handleForgotSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setForgotAlert(true);
-    setTimeout(() => setForgotAlert(false), 5000);
+    router.push("/auth/forgot-password");
   };
 
   return (
@@ -88,12 +86,6 @@ export default function LoginPage() {
         {error && (
             <div className="bg-red-50 border border-red-200 p-3.5 rounded-xl text-red-600 font-semibold text-xs mb-6">
             {error}
-          </div>
-        )}
-
-        {forgotAlert && (
-            <div className="bg-blue-50 border border-blue-200 p-3.5 rounded-xl text-[#2563EB] font-semibold text-xs mb-6">
-            A password reset link has been dispatched to your email address (simulated).
           </div>
         )}
 

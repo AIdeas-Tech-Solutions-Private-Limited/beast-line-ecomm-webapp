@@ -7,7 +7,7 @@ import { useApp } from "@/app/context/AppContext";
 import { OrderAddress, ProfileAddress } from "@/types/order";
 import { Coupon } from "@/types/coupon";
 import Loader from "@/components/Loader";
-import { CreditCard, Truck, CheckCircle2, ChevronRight, ShoppingBag, Landmark, Coins } from "lucide-react";
+import { Truck, CheckCircle2, ChevronRight, ShoppingBag, Coins } from "lucide-react";
 
 
 const getAddressStorageKey = (userId: string) => `athletica_profile_addresses_${userId}`;
@@ -32,6 +32,19 @@ const loadRazorpayScript = () => {
     };
     document.body.appendChild(script);
   });
+};
+
+const fetchStateFromPincode = async (pincode: string): Promise<string | null> => {
+  try {
+    const res = await fetch(`https://api.postalpincode.in/pincode/${pincode}`);
+    const data = await res.json();
+    if (data[0]?.Status === "Success" && data[0]?.PostOffice?.length > 0) {
+      return data[0].PostOffice[0].State;
+    }
+    return null;
+  } catch {
+    return null;
+  }
 };
 
 export default function CheckoutPage() {
@@ -106,7 +119,7 @@ export default function CheckoutPage() {
   }, [profileAddresses, selectedProfileAddressId]);
 
   // Payment State
-  const [paymentMethod, setPaymentMethod] = useState("UPI");
+  const [paymentMethod, setPaymentMethod] = useState("Razorpay");
 
   // Read checkout coupon from localStorage (stored in Cart page)
   const checkoutCoupon = useMemo<Coupon | null>(() => {
@@ -426,7 +439,16 @@ export default function CheckoutPage() {
                       type="text"
                       required
                       value={address.pincode}
-                      onChange={(e) => setAddress({ ...address, pincode: e.target.value })}
+                      onChange={async (e) => {
+                        const val = e.target.value;
+                        setAddress({ ...address, pincode: val });
+                        if (val.length === 6) {
+                          const state = await fetchStateFromPincode(val);
+                          if (state) {
+                            setAddress((prev) => ({ ...prev, pincode: val, state }));
+                          }
+                        }
+                      }}
                       className="w-full  border border-zinc-200 bg-zinc-50 px-4 py-2.5 text-xs font-semibold focus:border-black focus:bg-white focus:outline-none"
                     />
                   </div>
@@ -488,7 +510,7 @@ export default function CheckoutPage() {
               {/* Payment Method Selector Box */}
               <div className="border border-zinc-100 rounded-3xl p-6 bg-white">
                 <h3 className="font-black text-sm uppercase tracking-wider mb-6 flex items-center gap-2">
-                  <CreditCard size={16} className="text-black" /> 2. Payment Method
+                  <ShoppingBag size={16} className="text-black" /> 2. Payment Method
                 </h3>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -510,44 +532,6 @@ export default function CheckoutPage() {
                       </div>
                     </div>
                     <ShoppingBag size={18} className="text-zinc-400 shrink-0" />
-                  </label>
-
-                  {/* UPI */}
-                  <label className={`border p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${paymentMethod === "UPI" ? "border-[#2563EB] bg-blue-50/20" : "border-zinc-100 hover:border-zinc-300"
-                    }`}>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="payment-option"
-                        checked={paymentMethod === "UPI"}
-                        onChange={() => setPaymentMethod("UPI")}
-                        className="border-zinc-300 text-black focus:ring-[#2563EB] w-4 h-4"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold">Instant UPI Transfer</p>
-                        <p className="text-[10px] text-zinc-400">GPay, PhonePe, Paytm</p>
-                      </div>
-                    </div>
-                    <Landmark size={18} className="text-zinc-400 shrink-0" />
-                  </label>
-
-                  {/* Credit Card Direct */}
-                  <label className={`border p-4 rounded-2xl flex items-center justify-between cursor-pointer transition-all ${paymentMethod === "CreditCard" ? "border-[#2563EB] bg-blue-50/20" : "border-zinc-100 hover:border-zinc-300"
-                    }`}>
-                    <div className="flex items-center gap-3">
-                      <input
-                        type="radio"
-                        name="payment-option"
-                        checked={paymentMethod === "CreditCard"}
-                        onChange={() => setPaymentMethod("CreditCard")}
-                        className="border-zinc-300 text-black focus:ring-[#2563EB] w-4 h-4"
-                      />
-                      <div className="text-xs">
-                        <p className="font-bold">Credit/Debit Card</p>
-                        <p className="text-[10px] text-zinc-400">Visa, Mastercard, RuPay</p>
-                      </div>
-                    </div>
-                    <CreditCard size={18} className="text-zinc-400 shrink-0" />
                   </label>
 
                   {/* Cash On Delivery */}

@@ -161,6 +161,10 @@ export default function AuthModal({ mode, open, onClose, onModeChange }: AuthMod
           {isLogin && (
             <button
               type="button"
+              onClick={() => {
+                onClose();
+                router.push("/auth/forgot-password");
+              }}
               className="block w-full text-right text-xs text-black hover:underline"
             >
               Forgot Password?
